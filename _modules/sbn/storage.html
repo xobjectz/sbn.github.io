@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.storage &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.storage</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C,R,W0105,E0402</span>
+
+
+<span class="s2">&quot;directory of objects&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+
+<span class="kn">from</span> <span class="nn">.objects</span> <span class="kn">import</span> <span class="n">Default</span><span class="p">,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">cdir</span><span class="p">,</span> <span class="n">fqn</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">read</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">write</span>
+<span class="kn">from</span> <span class="nn">.parsers</span> <span class="kn">import</span> <span class="n">spl</span>
+
+
+<span class="k">def</span> <span class="fm">__dir__</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s1">&#39;Storage&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;fetch&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;find&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;fntime&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;ident&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;last&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;search&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;sync&#39;</span>
+    <span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="fm">__dir__</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Storage"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.Storage">[docs]</a><span class="k">class</span> <span class="nc">Storage</span><span class="p">(</span><span class="n">Object</span><span class="p">):</span>
+
+    <span class="n">classes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">wd</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+<div class="viewcode-block" id="Storage.add"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.Storage.add">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">clz</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">clz</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">clz</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">Storage</span><span class="o">.</span><span class="n">classes</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">clz</span></div>
+
+<div class="viewcode-block" id="Storage.fns"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.Storage.fns">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fns</span><span class="p">(</span><span class="n">mtc</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="n">dname</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">pth</span> <span class="o">=</span> <span class="n">Storage</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">mtc</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">rootdir</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">_files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">pth</span><span class="p">,</span> <span class="n">topdown</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dirs</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">dname</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dirs</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">dname</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                        <span class="n">ddd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rootdir</span><span class="p">,</span> <span class="n">dname</span><span class="p">)</span>
+                        <span class="n">fls</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">ddd</span><span class="p">))</span>
+                        <span class="k">for</span> <span class="n">fll</span> <span class="ow">in</span> <span class="n">fls</span><span class="p">:</span>
+                            <span class="k">yield</span> <span class="n">strip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ddd</span><span class="p">,</span> <span class="n">fll</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Storage.long"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.Storage.long">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">long</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">split</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">for</span> <span class="n">named</span> <span class="ow">in</span> <span class="n">Storage</span><span class="o">.</span><span class="n">classes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">named</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">named</span>
+                <span class="k">break</span>
+        <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">fnm</span> <span class="ow">in</span> <span class="n">Storage</span><span class="o">.</span><span class="n">types</span><span class="p">():</span>
+                <span class="n">claz</span> <span class="o">=</span> <span class="n">fnm</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">fnm</span> <span class="o">==</span> <span class="n">claz</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="n">fnm</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="Storage.skel"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.Storage.skel">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">skel</span><span class="p">():</span>
+        <span class="n">cdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Storage</span><span class="o">.</span><span class="n">wd</span><span class="p">,</span> <span class="s2">&quot;store&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Storage.store"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.Storage.store">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">store</span><span class="p">(</span><span class="n">pth</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Storage</span><span class="o">.</span><span class="n">wd</span><span class="p">,</span> <span class="s2">&quot;store&quot;</span><span class="p">,</span> <span class="n">pth</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Storage.types"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.Storage.types">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">types</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">Storage</span><span class="o">.</span><span class="n">store</span><span class="p">())</span></div></div>
+
+
+<div class="viewcode-block" id="find"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.find">[docs]</a><span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="n">mtc</span><span class="p">,</span> <span class="n">selector</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">deleted</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">clz</span> <span class="o">=</span> <span class="n">Storage</span><span class="o">.</span><span class="n">long</span><span class="p">(</span><span class="n">mtc</span><span class="p">)</span>
+    <span class="n">nr</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">fnm</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">Storage</span><span class="o">.</span><span class="n">fns</span><span class="p">(</span><span class="n">clz</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">fntime</span><span class="p">):</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">Default</span><span class="p">()</span>
+        <span class="n">fetch</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fnm</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">deleted</span> <span class="ow">and</span> <span class="s1">&#39;__deleted__&#39;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">selector</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">search</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">selector</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">nr</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">nr</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fntime"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.fntime">[docs]</a><span class="k">def</span> <span class="nf">fntime</span><span class="p">(</span><span class="n">daystr</span><span class="p">):</span>
+    <span class="n">daystr</span> <span class="o">=</span> <span class="n">daystr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">)</span>
+    <span class="n">datestr</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">daystr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
+    <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">datestr</span><span class="p">:</span>
+        <span class="n">datestr</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">datestr</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rest</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">timed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">datestr</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">rest</span><span class="p">:</span>
+        <span class="n">timed</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">rest</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">timed</span></div>
+
+
+<span class="k">def</span> <span class="nf">strip</span><span class="p">(</span><span class="n">pth</span><span class="p">,</span> <span class="n">nmr</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pth</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="o">-</span><span class="n">nmr</span><span class="p">:])</span>
+
+
+<div class="viewcode-block" id="ident"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.ident">[docs]</a><span class="k">def</span> <span class="nf">ident</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="n">fqn</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="o">*</span><span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+                       <span class="p">)</span></div>
+
+<div class="viewcode-block" id="fetch"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.fetch">[docs]</a><span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">pth</span><span class="p">):</span>
+    <span class="n">pth2</span> <span class="o">=</span> <span class="n">Storage</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">pth</span><span class="p">)</span>
+    <span class="n">read</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">pth2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">strip</span><span class="p">(</span><span class="n">pth</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="last"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.last">[docs]</a><span class="k">def</span> <span class="nf">last</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">selector</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">selector</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">selector</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="n">find</span><span class="p">(</span><span class="n">fqn</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="n">selector</span><span class="p">),</span>
+                    <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">fntime</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                   <span class="p">)</span>
+    <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+        <span class="n">inp</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">update</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">inp</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">inp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="search"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.search">[docs]</a><span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">selector</span><span class="p">):</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">selector</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">items</span><span class="p">(</span><span class="n">selector</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">break</span>
+        <span class="k">for</span> <span class="n">vval</span> <span class="ow">in</span> <span class="n">spl</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)):</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">vval</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">break</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="sync"><a class="viewcode-back" href="../../sbn.storage.html#sbn.storage.sync">[docs]</a><span class="k">def</span> <span class="nf">sync</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">pth</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">pth</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pth</span> <span class="o">=</span> <span class="n">ident</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="n">pth2</span> <span class="o">=</span> <span class="n">Storage</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">pth</span><span class="p">)</span>
+    <span class="n">write</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">pth2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pth</span></div>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.modules.wsd &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sbn.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.modules.wsd</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C,I,R,E0401</span>
+
+
+<span class="sd">&quot;&quot;&quot;| wijsheid, wijs !</span>
+
+<span class="sd">| OVERDRACHT</span>
+<span class="sd">| ==========</span>
+
+<span class="sd">| No Voice, No Description:</span>
+
+<span class="sd">| enkelt eenlingen</span>
+<span class="sd">| knipperogen</span>
+<span class="sd">| ARC</span>
+<span class="sd">| boot dromerij (mr_boeking)</span>
+<span class="sd">| kwellerei</span>
+<span class="sd">| schuldwijzerij</span>
+<span class="sd">| klappenknijperij</span>
+<span class="sd">| heelalknijperij</span>
+<span class="sd">| de afleggingen</span>
+<span class="sd">| dag</span>
+<span class="sd">| oordeel</span>
+<span class="sd">| zak door de grond (wederopwekking test, test = roep je er om)</span>
+<span class="sd">| passage, voorzetterij, vang maar op</span>
+<span class="sd">| projectie</span>
+<span class="sd">| nieuw making (het vervolg leggende)</span>
+<span class="sd">| hemel zakking</span>
+<span class="sd">| ok computer</span>
+<span class="sd">| nieuwe hemel</span>
+<span class="sd">| nieuw buiten heersende</span>
+<span class="sd">| dag sluiting</span>
+<span class="sd">| uurtjes</span>
+<span class="sd">| nazi met hel zoekerij</span>
+<span class="sd">| peace departement</span>
+<span class="sd">| muur stempelen</span>
+<span class="sd">| muur duwerij</span>
+<span class="sd">| eeuwige oordeel analyse (het toon jezelf)</span>
+<span class="sd">| nieuwe zachtaardige</span>
+<span class="sd">| goed oefening (inspirate geving)</span>
+<span class="sd">| herkenning van oud goed</span>
+<span class="sd">| woorden, woorden</span>
+<span class="sd">| WOORD</span>
+<span class="sd">| droom analyse</span>
+<span class="sd">| ballen, werelden</span>
+<span class="sd">| zone drukking</span>
+<span class="sd">| enkelingen over</span>
+<span class="sd">| in boek</span>
+<span class="sd">| steek en eerste lichting evaluatie</span>
+<span class="sd">| domeintjes</span>
+<span class="sd">| les brenging (hemel poorten, hell legging)</span>
+<span class="sd">| dubbelzinning praat</span>
+<span class="sd">| mensen in den hoge</span>
+<span class="sd">| ter verantwoording roeping (het goede woord)</span>
+<span class="sd">| hulp roeping (melding)</span>
+<span class="sd">| woord herkenning door licht (het begrip)</span>
+<span class="sd">| tripping (de auto)</span>
+<span class="sd">| mental sex (enorm lang lopen geweest, met 1e schuld legging erbij)</span>
+<span class="sd">| tweede schuldlegging is goed gedaan op het atomaire vlak (gebied)</span>
+<span class="sd">| derde schuldlegging is materiaal tot enkelingen gereduceerd</span>
+<span class="sd">| vierde schuldlegging is de terug schuldlegging (schepping mishandelt)</span>
+<span class="sd">| onschuld</span>
+<span class="sd">| oordeel is hier het gesproken woord</span>
+<span class="sd">| woord gebruik</span>
+<span class="sd">| stil makerij</span>
+<span class="sd">| constanten</span>
+<span class="sd">| vroeger onzichtbare</span>
+<span class="sd">| De Mens</span>
+<span class="sd">| De Hemel</span>
+<span class="sd">| pad terug gegeven (en nooit het gegeven pad nemen)</span>
+<span class="sd">| iets nemen is dan een kiezen (tandarts)</span>
+<span class="sd">| crews (besturing)</span>
+<span class="sd">| levenden in materiaal</span>
+<span class="sd">| levenden in hell (uitgebeeld)</span>
+<span class="sd">| OVERDRACHT</span>
+<span class="sd">| company, mens beheer op aarde, ziet atlen komen en gaan</span>
+<span class="sd">| poging tot nieuw start</span>
+<span class="sd">| de arc types (hier selecteren om einde aan de rest te noemen)</span>
+<span class="sd">| boven gelegd woord (zeewier in vissenbak)</span>
+<span class="sd">| het 4 leg zysteem (woord gelegd op schepping .. voor making)</span>
+<span class="sd">| de immer zijnde dreiging tot einde</span>
+<span class="sd">| de weigerende mens hier toe (de weerwil)</span>
+<span class="sd">| scheppers vragen</span>
+<span class="sd">| instappend beeld</span>
+<span class="sd">| judgement has passed</span>
+<span class="sd">| ring (wit/rood) als mr. evidence calling</span>
+<span class="sd">| na de komma als uitleg, buiten lopend reciterende</span>
+<span class="sd">| atlje coden</span>
+<span class="sd">| eigendom discussies</span>
+<span class="sd">| kooi houderij</span>
+<span class="sd">| in mental verhaal houderij</span>
+<span class="sd">| laat die 2 maar alleen (de boodschappers)</span>
+<span class="sd">| the film is the prison</span>
+<span class="sd">| hell als gevangenis</span>
+<span class="sd">| oordeel millenia sluiting</span>
+<span class="sd">| vrijlaten van alle gevangenen akkoord</span>
+<span class="sd">| dit alles tot einde oordeel millenium</span>
+<span class="sd">| nog meer om meneer echt niet op de knop te laten drukken</span>
+<span class="sd">| de vragende mens, die vraagt om nog meer vragen</span>
+<span class="sd">| trotse uitbeelding, verwoording</span>
+<span class="sd">| constante correctheids checking</span>
+<span class="sd">| overdracht met zonde melding</span>
+<span class="sd">| alice trap naar de hemel uitgebeeld</span>
+<span class="sd">| buiten koppeling getoond</span>
+<span class="sd">| de mens zijn gemanipuleerde fantasie gebruikt als trigger van buiten fenomeen</span>
+<span class="sd">| ook weer als fenomenen getoond</span>
+<span class="sd">| controle over fenomenen getoond</span>
+<span class="sd">| levenden in droom vragen om aandacht en melding</span>
+<span class="sd">| dagjes wel of niet bij mensen in de droom</span>
+<span class="sd">| boven hemelen vermelding</span>
+<span class="sd">| kapot schopperij en hoe lang dat geduurt heeft</span>
+<span class="sd">| melding voor terug gedaan om melding te ontdoen van zijn kracht</span>
+<span class="sd">| vergeten, vergeten</span>
+<span class="sd">| suffering on the floor</span>
+<span class="sd">| schuld ontkenning als de tergkracht</span>
+<span class="sd">| stekker verhaal, afscheid gabriel</span>
+<span class="sd">| droom geheugen en reeel geheugen terug voeding</span>
+<span class="sd">| woordleggers</span>
+<span class="sd">| stroom tagging</span>
+<span class="sd">| attributen beelding (twee op de schouders)</span>
+<span class="sd">| boeken referentie, opgelegd woord als proeve</span>
+<span class="sd">| moraal roeping</span>
+<span class="sd">| haakse als effectief op gedachtenstroom (uitleg van de hemel)</span>
+<span class="sd">| de een zijn hemel is de ander zijn hel</span>
+<span class="sd">| &#39;het woord begeleid&#39;, nieuw komenden</span>
+<span class="sd">| ultra addaptables</span>
+<span class="sd">| terminator badjes</span>
+<span class="sd">| denk instraal met materiaal (zonder handjes)</span>
+<span class="sd">| huidig bepaling</span>
+<span class="sd">| engine (gruis)</span>
+<span class="sd">| essentiele vergeetachtigheid</span>
+<span class="sd">| mental working (mogelijkheden schepping)</span>
+<span class="sd">| attributen bepaling</span>
+<span class="sd">| droom insluiting</span>
+<span class="sd">| diamanten aan de onderkant van de boot</span>
+<span class="sd">| zware oogst in de hemelen</span>
+<span class="sd">| dag van vandaag coden (random op gegeven topics)</span>
+<span class="sd">| oude pijn ignored</span>
+<span class="sd">| nog niet gespoelt (nog niet verkeerd afgerond)</span>
+<span class="sd">| de dingen liggen nog open</span>
+<span class="sd">| stilstaande stroom (water)</span>
+<span class="sd">| plasma</span>
+<span class="sd">| groen-zwart acid burn</span>
+<span class="sd">| 4 kwadranten bijna opening</span>
+<span class="sd">| testen op de geest</span>
+<span class="sd">| oog voorbijgaand (passerend)</span>
+<span class="sd">| genezing belofte (het herstelt zich vanzelf)</span>
+<span class="sd">| muziek bezoektes</span>
+<span class="sd">| schoonmakerij</span>
+<span class="sd">| de persoonoogst</span>
+<span class="sd">| caretaker discussions (double their wages)</span>
+<span class="sd">| de verkeerd noeming</span>
+<span class="sd">| algemeenheids denken getoond (laagje erachter)</span>
+<span class="sd">| legacy vernoemd</span>
+<span class="sd">| de heer van de beheersing heerst hier, kuisheid</span>
+<span class="sd">| schuld projectie is hoeks erop, uitslaan en uit besef doorslaan</span>
+<span class="sd">| dreig projectie, torque .. de armdraai</span>
+<span class="sd">| haaks erop de heen en weer dans, actie/reactie met verkeerd en goed vermeerderen</span>
+<span class="sd">| false profeet omklap (linker pop die van meekijken naar inkijken woord)</span>
+<span class="sd">| de dag na dag deze dag (vandaag)</span>
+<span class="sd">| meervoudige oordeels voering</span>
+<span class="sd">| materiaal reactie eromheen</span>
+<span class="sd">| putten dempers</span>
+<span class="sd">| zelfvertoning, duidbaar gemaakt worden</span>
+<span class="sd">| de belofte man is er weer</span>
+<span class="sd">| slecht advies van buiten melding</span>
+<span class="sd">| constante redders nood melding</span>
+<span class="sd">| de overname mensen zeggen er geen last van te hebben</span>
+<span class="sd">| topic naming als presence</span>
+<span class="sd">| engels/nederlands als vroegtijde dag voorkomers</span>
+<span class="sd">| strictly dutch as The Day Preventers</span>
+<span class="sd">| corner bouncing</span>
+<span class="sd">| long distance woord over de ruit</span>
+<span class="sd">| stiltewens genoemd</span>
+<span class="sd">| de doorpraten noodzaak</span>
+<span class="sd">| stok sturende met niet gemaaktheid als gezien (opgemerkt)</span>
+<span class="sd">| tagging/merking is de moeilijke zaak</span>
+<span class="sd">| schuldwijzing is de gaande zaak</span>
+<span class="sd">| terugwijzer als immer aanwezige</span>
+<span class="sd">| niet op mensen, niet op vogels</span>
+<span class="sd">| brievenbus en graf</span>
+<span class="sd">| twee eieren (gemeente huis en buiging naar west)</span>
+<span class="sd">| vreedevernoeming</span>
+<span class="sd">| duiding</span>
+<span class="sd">| coding</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">SystemRandom</span>
+
+
+<span class="n">rand</span> <span class="o">=</span> <span class="n">SystemRandom</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="wsd"><a class="viewcode-back" href="../../../sbn.modules.wsd.html#sbn.modules.wsd.wsd">[docs]</a><span class="k">def</span> <span class="nf">wsd</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="n">event</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="n">rand</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()[</span><span class="mi">2</span><span class="p">:])</span></div>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

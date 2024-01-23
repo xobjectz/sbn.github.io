@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.parsers &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.parsers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C,R,W0718,W0702,E0402</span>
+
+
+<span class="s2">&quot;parsing text&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">time</span> <span class="k">as</span> <span class="nn">ttime</span>
+
+
+<span class="kn">from</span> <span class="nn">.objects</span> <span class="kn">import</span> <span class="n">Default</span>
+
+
+<span class="k">def</span> <span class="fm">__dir__</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s1">&#39;NoDate&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;fntime&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;get_day&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;get_hour&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;get_time&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;laps&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;parse_command&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;parse_time&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;spl&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;today&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;to_day&#39;</span>
+    <span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="fm">__dir__</span><span class="p">()</span>
+
+
+<span class="n">bdmonths</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;Bo&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Jan&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Feb&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Mar&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Apr&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;May&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Jun&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Jul&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Aug&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Sep&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Oct&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Nov&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;Dec&#39;</span>
+<span class="p">]</span>
+
+
+<span class="n">year_formats</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">-%m-%Y&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;</span><span class="si">%d</span><span class="s2">-%m&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="NoDate"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.NoDate">[docs]</a><span class="k">class</span> <span class="nc">NoDate</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="k">pass</span></div>
+
+
+<span class="k">def</span> <span class="nf">extract_date</span><span class="p">(</span><span class="n">daystr</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="n">year_formats</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">ttime</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">ttime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">daystr</span><span class="p">,</span> <span class="n">fmt</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">res</span>
+
+
+<div class="viewcode-block" id="fntime"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.fntime">[docs]</a><span class="k">def</span> <span class="nf">fntime</span><span class="p">(</span><span class="n">daystr</span><span class="p">):</span>
+    <span class="n">daystr</span> <span class="o">=</span> <span class="n">daystr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">)</span>
+    <span class="n">datestr</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">daystr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">:])</span>
+    <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">datestr</span><span class="p">:</span>
+        <span class="n">datestr</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">datestr</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rest</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">timed</span> <span class="o">=</span> <span class="n">ttime</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">ttime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">datestr</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">rest</span><span class="p">:</span>
+        <span class="n">timed</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">rest</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">timed</span></div>
+
+
+<div class="viewcode-block" id="get_day"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.get_day">[docs]</a><span class="k">def</span> <span class="nf">get_day</span><span class="p">(</span><span class="n">daystr</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ymdre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\d+)-(\d+)-(\d+)&#39;</span><span class="p">,</span> <span class="n">daystr</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">day</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">yea</span><span class="p">)</span> <span class="o">=</span> <span class="n">ymdre</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ymre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\d+)-(\d+)&#39;</span><span class="p">,</span> <span class="n">daystr</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">day</span><span class="p">,</span> <span class="n">month</span><span class="p">)</span> <span class="o">=</span> <span class="n">ymre</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+            <span class="n">yea</span> <span class="o">=</span> <span class="n">ttime</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y&quot;</span><span class="p">,</span> <span class="n">ttime</span><span class="o">.</span><span class="n">localtime</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NoDate</span><span class="p">(</span><span class="n">daystr</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">ex</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
+    <span class="n">month</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">month</span><span class="p">)</span>
+    <span class="n">yea</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">yea</span><span class="p">)</span>
+    <span class="n">date</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">day</span><span class="p">,</span> <span class="n">bdmonths</span><span class="p">[</span><span class="n">month</span><span class="p">],</span> <span class="n">yea</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ttime</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">ttime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">date</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2"> %b %Y&quot;</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="get_hour"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.get_hour">[docs]</a><span class="k">def</span> <span class="nf">get_hour</span><span class="p">(</span><span class="n">daystr</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">hmsre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\d+):(\d+):(\d+)&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">daystr</span><span class="p">))</span>
+        <span class="n">hours</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hmsre</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="n">hoursmin</span> <span class="o">=</span> <span class="n">hours</span>  <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">hmsre</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="mi">60</span>
+        <span class="n">hmsres</span> <span class="o">=</span> <span class="n">hoursmin</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">hmsre</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">hmre</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\d+):(\d+)&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">daystr</span><span class="p">))</span>
+        <span class="n">hours</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">*</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">hmre</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="n">hmsres</span> <span class="o">=</span> <span class="n">hours</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">hmre</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="mi">60</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">hmsres</span></div>
+
+
+<div class="viewcode-block" id="get_time"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.get_time">[docs]</a><span class="k">def</span> <span class="nf">get_time</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">get_day</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">NoDate</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">to_day</span><span class="p">(</span><span class="n">today</span><span class="p">())</span>
+    <span class="n">hour</span> <span class="o">=</span>  <span class="n">get_hour</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">hour</span><span class="p">:</span>
+        <span class="n">target</span> <span class="o">+=</span> <span class="n">hour</span>
+    <span class="k">return</span> <span class="n">target</span></div>
+
+
+<div class="viewcode-block" id="laps"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.laps">[docs]</a><span class="k">def</span> <span class="nf">laps</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="n">short</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">txt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">nsec</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">nsec</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nsec</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">s&quot;</span>
+    <span class="n">yea</span> <span class="o">=</span> <span class="mi">365</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span>
+    <span class="n">week</span> <span class="o">=</span> <span class="mi">7</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span>
+    <span class="n">nday</span> <span class="o">=</span> <span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span>
+    <span class="n">hour</span> <span class="o">=</span> <span class="mi">60</span><span class="o">*</span><span class="mi">60</span>
+    <span class="n">minute</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="n">yeas</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nsec</span><span class="o">/</span><span class="n">yea</span><span class="p">)</span>
+    <span class="n">nsec</span> <span class="o">-=</span> <span class="n">yeas</span><span class="o">*</span><span class="n">yea</span>
+    <span class="n">weeks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nsec</span><span class="o">/</span><span class="n">week</span><span class="p">)</span>
+    <span class="n">nsec</span> <span class="o">-=</span> <span class="n">weeks</span><span class="o">*</span><span class="n">week</span>
+    <span class="n">nrdays</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nsec</span><span class="o">/</span><span class="n">nday</span><span class="p">)</span>
+    <span class="n">nsec</span> <span class="o">-=</span> <span class="n">nrdays</span><span class="o">*</span><span class="n">nday</span>
+    <span class="n">hours</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nsec</span><span class="o">/</span><span class="n">hour</span><span class="p">)</span>
+    <span class="n">nsec</span> <span class="o">-=</span> <span class="n">hours</span><span class="o">*</span><span class="n">hour</span>
+    <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nsec</span><span class="o">/</span><span class="n">minute</span><span class="p">)</span>
+    <span class="n">nsec</span> <span class="o">-=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minute</span><span class="o">*</span><span class="n">minutes</span><span class="p">)</span>
+    <span class="n">sec</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nsec</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">yeas</span><span class="p">:</span>
+        <span class="n">txt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">yeas</span><span class="si">}</span><span class="s2">y&quot;</span>
+    <span class="k">if</span> <span class="n">weeks</span><span class="p">:</span>
+        <span class="n">nrdays</span> <span class="o">+=</span> <span class="n">weeks</span> <span class="o">*</span> <span class="mi">7</span>
+    <span class="k">if</span> <span class="n">nrdays</span><span class="p">:</span>
+        <span class="n">txt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">nrdays</span><span class="si">}</span><span class="s2">d&quot;</span>
+    <span class="k">if</span> <span class="n">short</span> <span class="ow">and</span> <span class="n">txt</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">txt</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">hours</span><span class="p">:</span>
+        <span class="n">txt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">hours</span><span class="si">}</span><span class="s2">h&quot;</span>
+    <span class="k">if</span> <span class="n">minutes</span><span class="p">:</span>
+        <span class="n">txt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">minutes</span><span class="si">}</span><span class="s2">m&quot;</span>
+    <span class="k">if</span> <span class="n">sec</span><span class="p">:</span>
+        <span class="n">txt</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sec</span><span class="si">}</span><span class="s2">s&quot;</span>
+    <span class="n">txt</span> <span class="o">=</span> <span class="n">txt</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">txt</span></div>
+
+
+<div class="viewcode-block" id="parse_command"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.parse_command">[docs]</a><span class="k">def</span> <span class="nf">parse_command</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">txt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">args</span>    <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">args</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">cmd</span>     <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">cmd</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">gets</span>    <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">gets</span> <span class="ow">or</span> <span class="n">Default</span><span class="p">()</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">hasmods</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">hasmod</span> <span class="ow">or</span> <span class="kc">False</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">index</span>   <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">mod</span>     <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">mod</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">opts</span>    <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">opts</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">result</span>  <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">reult</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">sets</span>    <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">sets</span> <span class="ow">or</span> <span class="n">Default</span><span class="p">()</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">txt</span>     <span class="o">=</span> <span class="n">txt</span> <span class="ow">or</span> <span class="n">obj</span><span class="o">.</span><span class="n">txt</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">obj</span><span class="o">.</span><span class="n">otxt</span>    <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">txt</span>
+    <span class="n">_nr</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">spli</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">otxt</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">spli</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">spli</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">opts</span> <span class="o">+=</span> <span class="n">spli</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="s2">&quot;==&quot;</span> <span class="ow">in</span> <span class="n">spli</span><span class="p">:</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">spli</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;==&quot;</span><span class="p">,</span> <span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">gets</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">gets</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">val</span> <span class="o">+</span> <span class="s2">&quot;,&quot;</span> <span class="o">+</span> <span class="n">value</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">gets</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="s2">&quot;=&quot;</span> <span class="ow">in</span> <span class="n">spli</span><span class="p">:</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">spli</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">maxsplit</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;mod&quot;</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">hasmods</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">mod</span><span class="p">:</span>
+                    <span class="n">obj</span><span class="o">.</span><span class="n">mod</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;,</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">obj</span><span class="o">.</span><span class="n">mod</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">continue</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">sets</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">_nr</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">_nr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">cmd</span> <span class="o">=</span> <span class="n">spli</span>
+            <span class="k">continue</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">spli</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">txt</span>  <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">cmd</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">rest</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">txt</span>  <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">cmd</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">obj</span><span class="o">.</span><span class="n">rest</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">cmd</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="parse_time"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.parse_time">[docs]</a><span class="k">def</span> <span class="nf">parse_time</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">txt</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">txt</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">word</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;+&quot;</span><span class="p">):</span>
+            <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">word</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">return</span> <span class="n">ttime</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">seconds</span>
+        <span class="k">if</span> <span class="n">word</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">):</span>
+            <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">word</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">return</span> <span class="n">ttime</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">seconds</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">target</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">get_day</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">NoDate</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">to_day</span><span class="p">(</span><span class="n">today</span><span class="p">())</span>
+        <span class="n">hour</span> <span class="o">=</span>  <span class="n">get_hour</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hour</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">+=</span> <span class="n">hour</span>
+    <span class="k">return</span> <span class="n">target</span></div>
+
+
+<div class="viewcode-block" id="spl"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.spl">[docs]</a><span class="k">def</span> <span class="nf">spl</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">txt</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">txt</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">res</span> <span class="k">if</span> <span class="n">x</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="to_day"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.to_day">[docs]</a><span class="k">def</span> <span class="nf">to_day</span><span class="p">(</span><span class="n">daystr</span><span class="p">):</span>
+    <span class="n">previous</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">daystr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">daystr</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">daystr</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">previous</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">word</span>
+        <span class="n">previous</span> <span class="o">=</span> <span class="n">word</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">extract_date</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="today"><a class="viewcode-back" href="../../sbn.parsers.html#sbn.parsers.today">[docs]</a><span class="k">def</span> <span class="nf">today</span><span class="p">():</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span></div>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

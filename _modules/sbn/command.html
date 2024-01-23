@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.command &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.command</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C,R,W0718,W0611,E0402</span>
+
+
+<span class="s2">&quot;commands&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">.excepts</span> <span class="kn">import</span> <span class="n">Error</span>
+<span class="kn">from</span> <span class="nn">.objects</span> <span class="kn">import</span> <span class="n">Object</span>
+<span class="kn">from</span> <span class="nn">.parsers</span> <span class="kn">import</span> <span class="n">parse_command</span>
+<span class="kn">from</span> <span class="nn">.threads</span> <span class="kn">import</span> <span class="n">launch</span>
+
+
+<span class="k">def</span> <span class="fm">__dir__</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s2">&quot;Command&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="fm">__dir__</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Command"><a class="viewcode-back" href="../../sbn.command.html#sbn.command.Command">[docs]</a><span class="k">class</span> <span class="nc">Command</span><span class="p">(</span><span class="n">Object</span><span class="p">):</span>
+
+    <span class="n">cmds</span> <span class="o">=</span> <span class="n">Object</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Command.add"><a class="viewcode-back" href="../../sbn.command.html#sbn.command.Command.add">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">Command</span><span class="o">.</span><span class="n">cmds</span><span class="p">,</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Command.handle"><a class="viewcode-back" href="../../sbn.command.html#sbn.command.Command.handle">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+        <span class="n">parse_command</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Command</span><span class="o">.</span><span class="n">cmds</span><span class="p">,</span> <span class="n">evt</span><span class="o">.</span><span class="n">cmd</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">func</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">func</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+                <span class="n">evt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="n">Error</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+        <span class="n">evt</span><span class="o">.</span><span class="n">ready</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>sbn.modules.irc &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sbn.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="_static/opensearch.xml"/>
+    <link rel="icon" href="_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="about.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="sbn.modules.log" href="sbn.modules.log.html" />
+    <link rel="prev" title="sbn.modules.fnd" href="sbn.modules.fnd.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <a class="reference external image-reference" href="index.html"><img alt="_images/genocide.png" src="_images/genocide.png" style="width: 100%; height: 2.6cm;" /></a>
+<center>
+<i>
+By law, with the use of poison, killing, torturing, castrating, destroying,
+</i>
+</center>
+<center>
+<i>
+in whole or in part, all elderly and all handicapped (Wzd), all criminals (Wfz)
+</i>
+</center>
+<center>
+<i>
+and all psychiatric patients (WvGGZ) here in the Netherlands
+</i>
+</center><br>
+<center><p><strong>sbn.modules.irc</strong></p>
+<br>
+</center><span class="target" id="module-sbn.modules.irc"></span><p>internet relay chat</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Config</span></span><a class="reference internal" href="_modules/sbn/modules/irc.html#Config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.Config" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.channel">
+<span class="sig-name descname"><span class="pre">channel</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'#sbn'</span></em><a class="headerlink" href="#sbn.modules.irc.Config.channel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.commands">
+<span class="sig-name descname"><span class="pre">commands</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#sbn.modules.irc.Config.commands" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.control">
+<span class="sig-name descname"><span class="pre">control</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'!'</span></em><a class="headerlink" href="#sbn.modules.irc.Config.control" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.edited">
+<span class="sig-name descname"><span class="pre">edited</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1706035424.4441488</span></em><a class="headerlink" href="#sbn.modules.irc.Config.edited" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.nick">
+<span class="sig-name descname"><span class="pre">nick</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sbn'</span></em><a class="headerlink" href="#sbn.modules.irc.Config.nick" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.port">
+<span class="sig-name descname"><span class="pre">port</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">6667</span></em><a class="headerlink" href="#sbn.modules.irc.Config.port" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.realname">
+<span class="sig-name descname"><span class="pre">realname</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sbn'</span></em><a class="headerlink" href="#sbn.modules.irc.Config.realname" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.sasl">
+<span class="sig-name descname"><span class="pre">sasl</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#sbn.modules.irc.Config.sasl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.server">
+<span class="sig-name descname"><span class="pre">server</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'localhost'</span></em><a class="headerlink" href="#sbn.modules.irc.Config.server" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.servermodes">
+<span class="sig-name descname"><span class="pre">servermodes</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">''</span></em><a class="headerlink" href="#sbn.modules.irc.Config.servermodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.sleep">
+<span class="sig-name descname"><span class="pre">sleep</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">60</span></em><a class="headerlink" href="#sbn.modules.irc.Config.sleep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.username">
+<span class="sig-name descname"><span class="pre">username</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sbn'</span></em><a class="headerlink" href="#sbn.modules.irc.Config.username" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.users">
+<span class="sig-name descname"><span class="pre">users</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#sbn.modules.irc.Config.users" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Config.verbose">
+<span class="sig-name descname"><span class="pre">verbose</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#sbn.modules.irc.Config.verbose" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">IRC</span></span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.announce">
+<span class="sig-name descname"><span class="pre">announce</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.announce"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.announce" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.command">
+<span class="sig-name descname"><span class="pre">command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.command" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.connect">
+<span class="sig-name descname"><span class="pre">connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6667</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.connect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.direct">
+<span class="sig-name descname"><span class="pre">direct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.direct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.direct" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.disconnect">
+<span class="sig-name descname"><span class="pre">disconnect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.disconnect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.disconnect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.doconnect">
+<span class="sig-name descname"><span class="pre">doconnect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nck</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">port</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6667</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.doconnect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.doconnect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.dosay">
+<span class="sig-name descname"><span class="pre">dosay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.dosay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.dosay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.event">
+<span class="sig-name descname"><span class="pre">event</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.event"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.joinall">
+<span class="sig-name descname"><span class="pre">joinall</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.joinall"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.joinall" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.keep">
+<span class="sig-name descname"><span class="pre">keep</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.keep"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.keep" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.logon">
+<span class="sig-name descname"><span class="pre">logon</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nck</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.logon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.logon" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.parsing">
+<span class="sig-name descname"><span class="pre">parsing</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.parsing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.parsing" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.poll">
+<span class="sig-name descname"><span class="pre">poll</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.poll"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.poll" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.raw">
+<span class="sig-name descname"><span class="pre">raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.raw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.reconnect">
+<span class="sig-name descname"><span class="pre">reconnect</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.reconnect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.reconnect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.say">
+<span class="sig-name descname"><span class="pre">say</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.say"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.say" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.some">
+<span class="sig-name descname"><span class="pre">some</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.some"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.some" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.IRC.wait">
+<span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#IRC.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.IRC.wait" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sbn.modules.irc.Output">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Output</span></span><a class="reference internal" href="_modules/sbn/modules/irc.html#Output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.Output" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.Output.dosay">
+<span class="sig-name descname"><span class="pre">dosay</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#Output.dosay"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.Output.dosay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.Output.extend">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">txtlist</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#Output.extend"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.Output.extend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.Output.gettxt">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">gettxt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#Output.gettxt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.Output.gettxt" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.Output.oput">
+<span class="sig-name descname"><span class="pre">oput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">txt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#Output.oput"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.Output.oput" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.Output.out">
+<span class="sig-name descname"><span class="pre">out</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#Output.out"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.Output.out" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sbn.modules.irc.Output.size">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chan</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#Output.size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.Output.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sbn.modules.irc.Output.cache">
+<span class="sig-name descname"><span class="pre">cache</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sbn.modules.irc.Output.cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sbn.modules.irc.TextWrap">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">TextWrap</span></span><a class="reference internal" href="_modules/sbn/modules/irc.html#TextWrap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.TextWrap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_001">
+<span class="sig-name descname"><span class="pre">cb_001</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_001"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_001" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_auth">
+<span class="sig-name descname"><span class="pre">cb_auth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_auth"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_auth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_cap">
+<span class="sig-name descname"><span class="pre">cb_cap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_cap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_cap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_error">
+<span class="sig-name descname"><span class="pre">cb_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_h903">
+<span class="sig-name descname"><span class="pre">cb_h903</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_h903"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_h903" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_h904">
+<span class="sig-name descname"><span class="pre">cb_h904</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_h904"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_h904" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_kill">
+<span class="sig-name descname"><span class="pre">cb_kill</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_kill"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_kill" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_log">
+<span class="sig-name descname"><span class="pre">cb_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_log" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_notice">
+<span class="sig-name descname"><span class="pre">cb_notice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_notice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_notice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_privmsg">
+<span class="sig-name descname"><span class="pre">cb_privmsg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_privmsg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_privmsg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_quit">
+<span class="sig-name descname"><span class="pre">cb_quit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_quit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_quit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cb_ready">
+<span class="sig-name descname"><span class="pre">cb_ready</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evt</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cb_ready"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cb_ready" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.cfg">
+<span class="sig-name descname"><span class="pre">cfg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#cfg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.cfg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sbn.modules.irc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sbn/modules/irc.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sbn.modules.irc.init" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<br><br><br>
+<br>
+<br>
+<center>
+<b><p><a class="reference internal" href="about.html#about"><span class="std std-ref">about</span></a> - <a class="reference internal" href="evidence.html#evidence"><span class="std std-ref">evidence</span></a> - <a class="reference internal" href="guilty.html#guilty"><span class="std std-ref">guilty</span></a> -  <a class="reference internal" href="writings.html#writings"><span class="std std-ref">writings</span></a> - <a class="reference internal" href="manual.html#manual"><span class="std std-ref">manual</span></a></p>
+</b>
+</center>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

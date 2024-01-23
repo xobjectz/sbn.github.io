@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.modules.irc &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sbn.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.modules.irc</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C,R,W0105,W0612,W0718,E0402</span>
+
+
+<span class="s2">&quot;internet relay chat&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">queue</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">ssl</span>
+<span class="kn">import</span> <span class="nn">textwrap</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">_thread</span>
+
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">Default</span><span class="p">,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">edit</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">keys</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">Client</span><span class="p">,</span> <span class="n">Command</span><span class="p">,</span> <span class="n">Error</span><span class="p">,</span> <span class="n">Event</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">byorig</span><span class="p">,</span> <span class="n">debug</span><span class="p">,</span> <span class="n">last</span><span class="p">,</span> <span class="n">launch</span><span class="p">,</span> <span class="n">sync</span>
+
+
+<span class="n">Error</span><span class="o">.</span><span class="n">filter</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PING&quot;</span><span class="p">,</span> <span class="s2">&quot;PONG&quot;</span><span class="p">,</span> <span class="s2">&quot;PRIVMSG&quot;</span><span class="p">]</span>
+
+
+<span class="n">NAME</span> <span class="o">=</span> <span class="vm">__file__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+
+
+<span class="n">saylock</span> <span class="o">=</span> <span class="n">_thread</span><span class="o">.</span><span class="n">allocate_lock</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">():</span>
+    <span class="n">irc</span> <span class="o">=</span> <span class="n">IRC</span><span class="p">()</span>
+    <span class="n">irc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">irc</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">joined</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">irc</span></div>
+
+
+<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">(</span><span class="n">Default</span><span class="p">):</span>
+
+    <span class="n">channel</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;#</span><span class="si">{</span><span class="n">NAME</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">commands</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">control</span> <span class="o">=</span> <span class="s1">&#39;!&#39;</span>
+    <span class="n">edited</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">nick</span> <span class="o">=</span> <span class="n">NAME</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="mi">6667</span>
+    <span class="n">realname</span> <span class="o">=</span> <span class="n">NAME</span>
+    <span class="n">sasl</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span>
+    <span class="n">servermodes</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">sleep</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="n">NAME</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Default</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="ow">or</span> <span class="n">Config</span><span class="o">.</span><span class="n">channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commands</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">commands</span> <span class="ow">or</span> <span class="n">Config</span><span class="o">.</span><span class="n">commands</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nick</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nick</span> <span class="ow">or</span> <span class="n">Config</span><span class="o">.</span><span class="n">nick</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="ow">or</span> <span class="n">Config</span><span class="o">.</span><span class="n">port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">realname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">realname</span> <span class="ow">or</span> <span class="n">Config</span><span class="o">.</span><span class="n">realname</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="ow">or</span> <span class="n">Config</span><span class="o">.</span><span class="n">server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">username</span> <span class="ow">or</span> <span class="n">Config</span><span class="o">.</span><span class="n">username</span></div>
+
+
+<div class="viewcode-block" id="TextWrap"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.TextWrap">[docs]</a><span class="k">class</span> <span class="nc">TextWrap</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">TextWrapper</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">break_long_words</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drop_whitespace</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fix_sentence_endings</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">replace_whitespace</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tabsize</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="mi">400</span></div>
+
+
+<span class="n">wrapper</span> <span class="o">=</span> <span class="n">TextWrap</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Output"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.Output">[docs]</a><span class="k">class</span> <span class="nc">Output</span><span class="p">():</span>
+
+    <span class="n">cache</span> <span class="o">=</span> <span class="n">Object</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dostop</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oqueue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Output.dosay"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.Output.dosay">[docs]</a>    <span class="k">def</span> <span class="nf">dosay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="Output.extend"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.Output.extend">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">extend</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">txtlist</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">channel</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Output</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
+            <span class="n">Output</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">Output</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">txtlist</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Output.gettxt"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.Output.gettxt">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">gettxt</span><span class="p">(</span><span class="n">channel</span><span class="p">):</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">che</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Output</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">che</span><span class="p">:</span>
+                <span class="n">txt</span> <span class="o">=</span> <span class="n">che</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">txt</span></div>
+
+<div class="viewcode-block" id="Output.oput"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.Output.oput">[docs]</a>    <span class="k">def</span> <span class="nf">oput</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">channel</span> <span class="ow">and</span> <span class="n">channel</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">Output</span><span class="o">.</span><span class="n">cache</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">Output</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oqueue</span><span class="o">.</span><span class="n">put_nowait</span><span class="p">((</span><span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Output.out"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.Output.out">[docs]</a>    <span class="k">def</span> <span class="nf">out</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dostop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">oqueue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">channel</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">txt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dostop</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+                <span class="k">break</span>
+            <span class="n">txtlist</span> <span class="o">=</span> <span class="n">wrapper</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">txtlist</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">txtlist</span><span class="p">)</span>
+                <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">txtlist</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">say</span><span class="p">(</span>
+                         <span class="n">channel</span><span class="p">,</span>
+                         <span class="sa">f</span><span class="s2">&quot;use !mre to show more (+</span><span class="si">{</span><span class="n">length</span><span class="si">}</span><span class="s2">)&quot;</span>
+                        <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">_nr</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">for</span> <span class="n">txt</span> <span class="ow">in</span> <span class="n">txtlist</span><span class="p">:</span>
+                <span class="n">_nr</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dosay</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Output.size"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.Output.size">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">size</span><span class="p">(</span><span class="n">chan</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">chan</span> <span class="ow">in</span> <span class="n">Output</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">Output</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">chan</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="k">return</span> <span class="mi">0</span></div></div>
+
+
+<div class="viewcode-block" id="IRC"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC">[docs]</a><span class="k">class</span> <span class="nc">IRC</span><span class="p">(</span><span class="n">Client</span><span class="p">,</span> <span class="n">Output</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Client</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">Output</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">Default</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">authed</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">joined</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">ready</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">Default</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">keeprunning</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">lastline</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nrconnect</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nrsend</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zelf</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;903&#39;</span><span class="p">,</span> <span class="n">cb_h903</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;904&#39;</span><span class="p">,</span> <span class="n">cb_h903</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;AUTHENTICATE&#39;</span><span class="p">,</span> <span class="n">cb_auth</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;CAP&#39;</span><span class="p">,</span> <span class="n">cb_cap</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;ERROR&#39;</span><span class="p">,</span> <span class="n">cb_error</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;LOG&#39;</span><span class="p">,</span> <span class="n">cb_log</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;NOTICE&#39;</span><span class="p">,</span> <span class="n">cb_notice</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;PRIVMSG&#39;</span><span class="p">,</span> <span class="n">cb_privmsg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;QUIT&#39;</span><span class="p">,</span> <span class="n">cb_quit</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;366&quot;</span><span class="p">,</span> <span class="n">cb_ready</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IRC.announce"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.announce">[docs]</a>    <span class="k">def</span> <span class="nf">announce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">oput</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.command"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.command">[docs]</a>    <span class="k">def</span> <span class="nf">command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">saylock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cmd</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">txt</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">cmd</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> :</span><span class="si">{</span><span class="n">txt</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">txt</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="s2">&quot;{cmd.upper()} </span><span class="si">{args[0]}</span><span class="s2"> </span><span class="si">{args[1]}</span><span class="s2"> :</span><span class="si">{txt}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">last</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">5.0</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">5.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">last</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="IRC.connect"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.connect">[docs]</a>    <span class="k">def</span> <span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6667</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nrconnect</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">password</span><span class="p">:</span>
+            <span class="n">debug</span><span class="p">(</span><span class="s2">&quot;using SASL&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">sasl</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="s2">&quot;6697&quot;</span>
+            <span class="n">ctx</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">SSLContext</span><span class="p">(</span><span class="n">ssl</span><span class="o">.</span><span class="n">PROTOCOL_TLS</span><span class="p">)</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">options</span> <span class="o">|=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">OP_NO_TLSv1</span> <span class="o">|</span> <span class="n">ssl</span><span class="o">.</span><span class="n">OP_NO_TLSv1_1</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">minimum_version</span> <span class="o">=</span> <span class="n">ssl</span><span class="o">.</span><span class="n">TLSVersion</span><span class="o">.</span><span class="n">TLSv1_2</span>
+            <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">wrap_socket</span><span class="p">(</span><span class="n">sock</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">server</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">(</span><span class="s1">&#39;CAP LS 302&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">addr</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">getaddrinfo</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">create_connection</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">authed</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">set_inheritable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="n">os</span><span class="o">.</span><span class="n">O_RDWR</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mf">180.0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="IRC.direct"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.direct">[docs]</a>    <span class="k">def</span> <span class="nf">direct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">saylock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">2.0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.disconnect"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.disconnect">[docs]</a>    <span class="k">def</span> <span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span>
+                <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">,</span>
+                <span class="ne">OSError</span><span class="p">,</span>
+                <span class="ne">BrokenPipeError</span>
+               <span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">Error</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.doconnect"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.doconnect">[docs]</a>    <span class="k">def</span> <span class="nf">doconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">nck</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6667</span><span class="p">):</span>
+        <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">port</span><span class="p">):</span>
+                    <span class="k">break</span>
+            <span class="k">except</span> <span class="p">(</span>
+                    <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">,</span>
+                    <span class="ne">OSError</span><span class="p">,</span>
+                    <span class="ne">ConnectionResetError</span>
+                   <span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+                <span class="n">debug</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">))</span>
+            <span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sleeping </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">sleep</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">sleep</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logon</span><span class="p">(</span><span class="n">server</span><span class="p">,</span> <span class="n">nck</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.event"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.event">[docs]</a>    <span class="k">def</span> <span class="nf">event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="n">evt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsing</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">command</span>
+        <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;PING&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">pongcheck</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;PONG&#39;</span><span class="p">,</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;PONG&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">pongcheck</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;001&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">needconnect</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">servermodes</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;MODE </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">nick</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">servermodes</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">zelf</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s2">&quot;376&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">joinall</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;002&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">][:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;366&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">joined</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">cmd</span> <span class="o">==</span> <span class="s1">&#39;433&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="n">txt</span>
+            <span class="n">nck</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">nick</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;NICK&#39;</span><span class="p">,</span> <span class="n">nck</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">evt</span></div>
+
+<div class="viewcode-block" id="IRC.joinall"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.joinall">[docs]</a>    <span class="k">def</span> <span class="nf">joinall</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;JOIN&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.keep"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.keep">[docs]</a>    <span class="k">def</span> <span class="nf">keep</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopped</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">authed</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">keeprunning</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">sleep</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">pongcheck</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;PING&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">server</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">pongcheck</span><span class="p">:</span>
+                <span class="n">debug</span><span class="p">(</span><span class="s2">&quot;failed pongcheck, restarting&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">pongcheck</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">keeprunning</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                <span class="n">init</span><span class="p">()</span>
+                <span class="k">break</span></div>
+
+<div class="viewcode-block" id="IRC.logon"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.logon">[docs]</a>    <span class="k">def</span> <span class="nf">logon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">nck</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">authed</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;NICK </span><span class="si">{</span><span class="n">nck</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;USER </span><span class="si">{</span><span class="n">nck</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">server</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">server</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">nck</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IRC.parsing"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.parsing">[docs]</a>    <span class="k">def</span> <span class="nf">parsing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="n">rawstr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+        <span class="n">rawstr</span> <span class="o">=</span> <span class="n">rawstr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\u0001</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">rawstr</span> <span class="o">=</span> <span class="n">rawstr</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\001</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">debug</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">rawstr</span> <span class="o">=</span> <span class="n">rawstr</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">arguments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">arguments</span> <span class="o">=</span> <span class="n">rawstr</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">arguments</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">server</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">):</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">origin</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arguments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">command</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arguments</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">txtlist</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">adding</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">arguments</span><span class="p">[</span><span class="mi">2</span><span class="p">:]:</span>
+                    <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">arg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">):</span>
+                        <span class="n">adding</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">txtlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">adding</span><span class="p">:</span>
+                        <span class="n">txtlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">obj</span><span class="o">.</span><span class="n">arguments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">txtlist</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">origin</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">server</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">nick</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">origin</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;!&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">nick</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">arguments</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">):</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">target</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">nick</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="o">.</span><span class="n">txt</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="n">rawstr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="o">.</span><span class="n">txt</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">arguments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="n">arguments</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">spl</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">txt</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">spl</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">spl</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">args</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">rest</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">orig</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">txt</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">command</span>
+        <span class="k">return</span> <span class="n">obj</span></div>
+
+<div class="viewcode-block" id="IRC.poll"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.poll">[docs]</a>    <span class="k">def</span> <span class="nf">poll</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">some</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">BlockingIOError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">))</span>
+            <span class="k">except</span> <span class="p">(</span>
+                    <span class="ne">OSError</span><span class="p">,</span>
+                    <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
+                    <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">,</span>
+                    <span class="n">ssl</span><span class="o">.</span><span class="n">SSLZeroReturnError</span><span class="p">,</span>
+                    <span class="ne">ConnectionResetError</span><span class="p">,</span>
+                    <span class="ne">BrokenPipeError</span>
+                   <span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">Error</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                <span class="n">debug</span><span class="p">(</span><span class="s2">&quot;handler stopped&quot;</span><span class="p">)</span>
+                <span class="n">evt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">ex</span><span class="p">))</span>
+                <span class="k">return</span> <span class="n">evt</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">txt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="n">txt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.raw"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.raw">[docs]</a>    <span class="k">def</span> <span class="nf">raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="n">txt</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()</span>
+        <span class="n">debug</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="n">txt</span><span class="p">[:</span><span class="mi">500</span><span class="p">]</span>
+        <span class="n">txt</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">txt</span><span class="p">,</span> <span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span>
+                    <span class="ne">OSError</span><span class="p">,</span>
+                    <span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">,</span>
+                    <span class="n">ssl</span><span class="o">.</span><span class="n">SSLZeroReturnError</span><span class="p">,</span>
+                    <span class="ne">ConnectionResetError</span><span class="p">,</span>
+                    <span class="ne">BrokenPipeError</span>
+                   <span class="p">)</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+                <span class="n">Error</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">last</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nrsend</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="IRC.reconnect"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.reconnect">[docs]</a>    <span class="k">def</span> <span class="nf">reconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;reconnecting to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">server</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">ssl</span><span class="o">.</span><span class="n">SSLError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">joined</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doconnect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">server</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">nick</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">port</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="IRC.dosay"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.dosay">[docs]</a>    <span class="k">def</span> <span class="nf">dosay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">joined</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="n">txt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;  &#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;PRIVMSG&#39;</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.say"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.say">[docs]</a>    <span class="k">def</span> <span class="nf">say</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oput</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.some"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.some">[docs]</a>    <span class="k">def</span> <span class="nf">some</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">inbytes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">512</span><span class="p">)</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">inbytes</span><span class="p">,</span> <span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">txt</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ConnectionResetError</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">lastline</span> <span class="o">+=</span> <span class="n">txt</span>
+        <span class="n">splitted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">lastline</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\r\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">splitted</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">lastline</span> <span class="o">=</span> <span class="n">splitted</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="IRC.start"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">last</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">channel</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">connected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">joined</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">launch</span><span class="p">(</span><span class="n">Output</span><span class="o">.</span><span class="n">out</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+        <span class="n">Client</span><span class="o">.</span><span class="n">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">launch</span><span class="p">(</span>
+               <span class="bp">self</span><span class="o">.</span><span class="n">doconnect</span><span class="p">,</span>
+               <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">server</span> <span class="ow">or</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+               <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">nick</span><span class="p">,</span>
+               <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">port</span> <span class="ow">or</span> <span class="s1">&#39;6667&#39;</span><span class="p">)</span>
+              <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">keeprunning</span><span class="p">:</span>
+            <span class="n">launch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keep</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.stop"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dostop</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">oput</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">Client</span><span class="o">.</span><span class="n">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IRC.wait"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.IRC.wait">[docs]</a>    <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">ready</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="cb_auth"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_auth">[docs]</a><span class="k">def</span> <span class="nf">cb_auth</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="n">bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;AUTHENTICATE </span><span class="si">{</span><span class="n">bot</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">password</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cb_cap"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_cap">[docs]</a><span class="k">def</span> <span class="nf">cb_cap</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bot</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">password</span> <span class="ow">and</span> <span class="s1">&#39;ACK&#39;</span> <span class="ow">in</span> <span class="n">evt</span><span class="o">.</span><span class="n">arguments</span><span class="p">:</span>
+        <span class="n">bot</span><span class="o">.</span><span class="n">direct</span><span class="p">(</span><span class="s1">&#39;AUTHENTICATE PLAIN&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bot</span><span class="o">.</span><span class="n">direct</span><span class="p">(</span><span class="s1">&#39;CAP REQ :sasl&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cb_error"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_error">[docs]</a><span class="k">def</span> <span class="nf">cb_error</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="n">bot</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">nrerror</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">bot</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">)</span>
+    <span class="n">debug</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cb_h903"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_h903">[docs]</a><span class="k">def</span> <span class="nf">cb_h903</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="n">bot</span><span class="o">.</span><span class="n">direct</span><span class="p">(</span><span class="s1">&#39;CAP END&#39;</span><span class="p">)</span>
+    <span class="n">bot</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">authed</span><span class="o">.</span><span class="n">set</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="cb_h904"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_h904">[docs]</a><span class="k">def</span> <span class="nf">cb_h904</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="n">bot</span><span class="o">.</span><span class="n">direct</span><span class="p">(</span><span class="s1">&#39;CAP END&#39;</span><span class="p">)</span>
+    <span class="n">bot</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">authed</span><span class="o">.</span><span class="n">set</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="cb_kill"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_kill">[docs]</a><span class="k">def</span> <span class="nf">cb_kill</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="cb_log"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_log">[docs]</a><span class="k">def</span> <span class="nf">cb_log</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="cb_ready"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_ready">[docs]</a><span class="k">def</span> <span class="nf">cb_ready</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">bot</span><span class="p">:</span>
+        <span class="n">bot</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">ready</span><span class="o">.</span><span class="n">set</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="cb_001"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_001">[docs]</a><span class="k">def</span> <span class="nf">cb_001</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="n">bot</span><span class="o">.</span><span class="n">logon</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="cb_notice"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_notice">[docs]</a><span class="k">def</span> <span class="nf">cb_notice</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;VERSION&#39;</span><span class="p">):</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\001</span><span class="s1">VERSION </span><span class="si">{</span><span class="n">NAME</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s1"> 140 - </span><span class="si">{</span><span class="n">bot</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">username</span><span class="si">}</span><span class="se">\001</span><span class="s1">&#39;</span>
+        <span class="n">bot</span><span class="o">.</span><span class="n">command</span><span class="p">(</span><span class="s1">&#39;NOTICE&#39;</span><span class="p">,</span> <span class="n">evt</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cb_privmsg"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_privmsg">[docs]</a><span class="k">def</span> <span class="nf">cb_privmsg</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">bot</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;!&#39;</span><span class="p">,]:</span>
+            <span class="n">evt</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">elif</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">bot</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">nick</span><span class="si">}</span><span class="s1">:&#39;</span><span class="p">):</span>
+            <span class="n">evt</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">bot</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">nick</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">:</span>
+            <span class="n">evt</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;command from </span><span class="si">{</span><span class="n">evt</span><span class="o">.</span><span class="n">origin</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">evt</span><span class="o">.</span><span class="n">txt</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">Command</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="cb_quit"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cb_quit">[docs]</a><span class="k">def</span> <span class="nf">cb_quit</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">bot</span> <span class="o">=</span> <span class="n">byorig</span><span class="p">(</span><span class="n">evt</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+    <span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;quit from </span><span class="si">{</span><span class="n">bot</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">server</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">evt</span><span class="o">.</span><span class="n">orig</span> <span class="ow">and</span> <span class="n">evt</span><span class="o">.</span><span class="n">orig</span> <span class="ow">in</span> <span class="n">bot</span><span class="o">.</span><span class="n">zelf</span><span class="p">:</span>
+        <span class="n">bot</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span></div>
+
+
+<span class="s2">&quot;commands&quot;</span>
+
+
+<div class="viewcode-block" id="cfg"><a class="viewcode-back" href="../../../sbn.modules.irc.html#sbn.modules.irc.cfg">[docs]</a><span class="k">def</span> <span class="nf">cfg</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">last</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">sets</span><span class="p">:</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span>
+                    <span class="n">fmt</span><span class="p">(</span>
+                        <span class="n">config</span><span class="p">,</span>
+                        <span class="n">keys</span><span class="p">(</span><span class="n">config</span><span class="p">),</span>
+                        <span class="n">skip</span><span class="o">=</span><span class="s1">&#39;control,password,realname,sleep,username&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+                       <span class="p">)</span>
+                   <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">edit</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">sets</span><span class="p">)</span>
+        <span class="n">sync</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s1">&#39;ok&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

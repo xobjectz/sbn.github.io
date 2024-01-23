@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.clients &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.clients</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C,R,W0212,W0613,E0402</span>
+
+
+<span class="s2">&quot;clients&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">_thread</span>
+
+
+<span class="kn">from</span> <span class="nn">.brokers</span> <span class="kn">import</span> <span class="n">Fleet</span>
+<span class="kn">from</span> <span class="nn">.command</span> <span class="kn">import</span> <span class="n">Command</span>
+<span class="kn">from</span> <span class="nn">.handler</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Handler</span>
+<span class="kn">from</span> <span class="nn">.objects</span> <span class="kn">import</span> <span class="n">Object</span>
+<span class="kn">from</span> <span class="nn">.parsers</span> <span class="kn">import</span> <span class="n">spl</span>
+<span class="kn">from</span> <span class="nn">.storage</span> <span class="kn">import</span> <span class="n">Storage</span>
+<span class="kn">from</span> <span class="nn">.threads</span> <span class="kn">import</span> <span class="n">launch</span>
+
+
+<span class="k">def</span> <span class="fm">__dir__</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s2">&quot;Client&quot;</span><span class="p">,</span>
+        <span class="s1">&#39;cmnd&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;forever&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;scan&#39;</span>
+    <span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="fm">__dir__</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Client"><a class="viewcode-back" href="../../sbn.clients.html#sbn.clients.Client">[docs]</a><span class="k">class</span> <span class="nc">Client</span><span class="p">(</span><span class="n">Handler</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Handler</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s2">&quot;command&quot;</span><span class="p">,</span> <span class="n">Command</span><span class="o">.</span><span class="n">handle</span><span class="p">)</span>
+        <span class="n">Fleet</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Client.announce"><a class="viewcode-back" href="../../sbn.clients.html#sbn.clients.Client.announce">[docs]</a>    <span class="k">def</span> <span class="nf">announce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Client.say"><a class="viewcode-back" href="../../sbn.clients.html#sbn.clients.Client.say">[docs]</a>    <span class="k">def</span> <span class="nf">say</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Client.raw"><a class="viewcode-back" href="../../sbn.clients.html#sbn.clients.Client.raw">[docs]</a>    <span class="k">def</span> <span class="nf">raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="cmnd"><a class="viewcode-back" href="../../sbn.clients.html#sbn.clients.cmnd">[docs]</a><span class="k">def</span> <span class="nf">cmnd</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+    <span class="n">evn</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+    <span class="n">evn</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="n">txt</span>
+    <span class="n">Command</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">evn</span><span class="p">)</span>
+    <span class="n">evn</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">evn</span></div>
+
+
+<div class="viewcode-block" id="forever"><a class="viewcode-back" href="../../sbn.clients.html#sbn.clients.forever">[docs]</a><span class="k">def</span> <span class="nf">forever</span><span class="p">():</span>
+    <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyboardInterrupt</span><span class="p">,</span> <span class="ne">EOFError</span><span class="p">):</span>
+            <span class="n">_thread</span><span class="o">.</span><span class="n">interrupt_main</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="scan"><a class="viewcode-back" href="../../sbn.clients.html#sbn.clients.scan">[docs]</a><span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">modstr</span><span class="p">,</span> <span class="n">initer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">disable</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[]:</span>
+    <span class="n">mds</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">modname</span> <span class="ow">in</span> <span class="n">spl</span><span class="p">(</span><span class="n">modstr</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">modname</span> <span class="ow">in</span> <span class="n">spl</span><span class="p">(</span><span class="n">disable</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">modname</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">module</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">for</span> <span class="n">_key</span><span class="p">,</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s1">&#39;event&#39;</span> <span class="ow">in</span> <span class="n">cmd</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="p">:</span>
+                <span class="n">Command</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_key</span><span class="p">,</span> <span class="n">clz</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">clz</span><span class="p">,</span> <span class="n">Object</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">Storage</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">clz</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">initer</span> <span class="ow">and</span> <span class="s2">&quot;init&quot;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+            <span class="n">module</span><span class="o">.</span><span class="n">_thr</span> <span class="o">=</span> <span class="n">launch</span><span class="p">(</span><span class="n">module</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;init </span><span class="si">{</span><span class="n">modname</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">mds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">wait</span> <span class="ow">and</span> <span class="n">initer</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">mds</span><span class="p">:</span>
+            <span class="n">mod</span><span class="o">.</span><span class="n">_thr</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">mds</span></div>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

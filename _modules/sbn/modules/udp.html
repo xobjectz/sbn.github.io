@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.modules.udp &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sbn.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.modules.udp</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C0115,C0116,W0105,E0402,R0903</span>
+
+
+<span class="s2">&quot;udp to irc relay&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">select</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">Fleet</span><span class="p">,</span> <span class="n">Object</span><span class="p">,</span> <span class="n">launch</span>
+
+
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">():</span>
+    <span class="n">udpd</span> <span class="o">=</span> <span class="n">UDP</span><span class="p">()</span>
+    <span class="n">udpd</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">udpd</span></div>
+
+
+<div class="viewcode-block" id="Cfg"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.Cfg">[docs]</a><span class="k">class</span> <span class="nc">Cfg</span><span class="p">(</span><span class="n">Object</span><span class="p">):</span>
+
+    <span class="n">addr</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="mi">5500</span></div>
+
+
+<div class="viewcode-block" id="UDP"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.UDP">[docs]</a><span class="k">class</span> <span class="nc">UDP</span><span class="p">(</span><span class="n">Object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">Object</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stopped</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_DGRAM</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SO_REUSEADDR</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SO_REUSEPORT</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_starttime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ready</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+
+<div class="viewcode-block" id="UDP.output"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.UDP.output">[docs]</a>    <span class="k">def</span> <span class="nf">output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">addr</span><span class="p">:</span>
+            <span class="n">Cfg</span><span class="o">.</span><span class="n">addr</span> <span class="o">=</span> <span class="n">addr</span>
+        <span class="k">for</span> <span class="n">bot</span> <span class="ow">in</span> <span class="n">Fleet</span><span class="o">.</span><span class="n">objs</span><span class="p">:</span>
+            <span class="n">bot</span><span class="o">.</span><span class="n">announce</span><span class="p">(</span><span class="n">txt</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\00</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="UDP.loop"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.UDP.loop">[docs]</a>    <span class="k">def</span> <span class="nf">loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="n">Cfg</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">Cfg</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">gaierror</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ready</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopped</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">txt</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">recvfrom</span><span class="p">(</span><span class="mi">64000</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stopped</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">txt</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(),</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">addr</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UDP.exit"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.UDP.exit">[docs]</a>    <span class="k">def</span> <span class="nf">exit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stopped</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sock</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span>
+                          <span class="nb">bytes</span><span class="p">(</span><span class="s2">&quot;exit&quot;</span><span class="p">,</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">),</span>
+                          <span class="p">(</span><span class="n">Cfg</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">Cfg</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+                         <span class="p">)</span></div>
+
+<div class="viewcode-block" id="UDP.start"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.UDP.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">launch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loop</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="toudp"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.toudp">[docs]</a><span class="k">def</span> <span class="nf">toudp</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">txt</span><span class="p">):</span>
+    <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_DGRAM</span><span class="p">)</span>
+    <span class="n">sock</span><span class="o">.</span><span class="n">sendto</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">txt</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="udp"><a class="viewcode-back" href="../../../sbn.modules.udp.html#sbn.modules.udp.udp">[docs]</a><span class="k">def</span> <span class="nf">udp</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">rest</span><span class="p">:</span>
+        <span class="n">toudp</span><span class="p">(</span><span class="n">Cfg</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">Cfg</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">event</span><span class="o">.</span><span class="n">rest</span><span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">rest</span><span class="p">)</span><span class="si">}</span><span class="s2"> characters sent&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">select</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                         <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">,</span> <span class="p">],</span>
+                         <span class="p">[],</span>
+                         <span class="p">[],</span>
+                         <span class="mf">0.0</span>
+                        <span class="p">)[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">return</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">_out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span> <span class="o">=</span> <span class="n">select</span><span class="o">.</span><span class="n">select</span><span class="p">(</span>
+                                             <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">,],</span>
+                                             <span class="p">[],</span>
+                                             <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">,]</span>
+                                            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">sock</span> <span class="ow">in</span> <span class="n">inp</span><span class="p">:</span>
+            <span class="n">txt</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">txt</span><span class="p">:</span>
+                <span class="n">stop</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+            <span class="n">toudp</span><span class="p">(</span><span class="n">Cfg</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">Cfg</span><span class="o">.</span><span class="n">port</span><span class="p">,</span> <span class="n">txt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
+            <span class="k">break</span></div>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

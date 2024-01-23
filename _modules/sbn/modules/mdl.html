@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.modules.mdl &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sbn.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../../about.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.modules.mdl</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C,R,W0613,E0402</span>
+
+
+<span class="s2">&quot;genocide model of the netherlands&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">Object</span><span class="p">,</span> <span class="n">construct</span><span class="p">,</span> <span class="n">keys</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">Event</span><span class="p">,</span> <span class="n">Fleet</span><span class="p">,</span> <span class="n">Repeater</span><span class="p">,</span> <span class="n">laps</span><span class="p">,</span> <span class="n">launch</span>
+
+
+<span class="k">def</span> <span class="fm">__dir__</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">(</span>
+            <span class="s1">&#39;init&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;now&#39;</span>
+           <span class="p">)</span> 
+
+
+<div class="viewcode-block" id="init"><a class="viewcode-back" href="../../../sbn.modules.mdl.html#sbn.modules.mdl.init">[docs]</a><span class="k">def</span> <span class="nf">init</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">(</span><span class="n">oorzaken</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">oorzaken</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">10000</span><span class="p">:</span>
+            <span class="n">evt</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+            <span class="n">evt</span><span class="o">.</span><span class="n">txt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">evt</span><span class="o">.</span><span class="n">rest</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="n">sec</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="n">repeater</span> <span class="o">=</span> <span class="n">Repeater</span><span class="p">(</span><span class="n">sec</span><span class="p">,</span> <span class="n">cbstats</span><span class="p">,</span> <span class="n">evt</span><span class="p">,</span> <span class="n">thrname</span><span class="o">=</span><span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+            <span class="n">repeater</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">launch</span><span class="p">(</span><span class="n">daily</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;daily&quot;</span><span class="p">)</span></div>
+    
+
+<span class="n">DAY</span> <span class="o">=</span> <span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span>
+<span class="n">YEAR</span> <span class="o">=</span> <span class="mi">365</span><span class="o">*</span><span class="n">DAY</span>
+<span class="n">SOURCE</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/bthate/genocide&quot;</span>
+<span class="n">STARTDATE</span> <span class="o">=</span> <span class="s2">&quot;2020-01-01 00:00:00&quot;</span>
+<span class="n">STARTTIME</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">STARTDATE</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">))</span>
+
+
+<span class="n">oor</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&quot;Totaal onderliggende doodsoorzaken (aantal)&quot;;</span>
+<span class="s2">         &quot;1 Infectieuze en parasitaire ziekten/Totaal infectieuze en parasitaire zktn (aantal)&quot;;</span>
+<span class="s2">         &quot;1 Infectieuze en parasitaire ziekten/1.1 Tuberculose (aantal)&quot;;</span>
+<span class="s2">         &quot;1 Infectieuze en parasitaire ziekten/1.2 Meningokokkeninfecties (aantal)&quot;;</span>
+<span class="s2">         &quot;1 Infectieuze en parasitaire ziekten/1.3 Virale hepatitis (aantal)&quot;;</span>
+<span class="s2">         &quot;1 Infectieuze en parasitaire ziekten/1.4 AIDS (aantal)&quot;;</span>
+<span class="s2">         &quot;1 Infectieuze en parasitaire ziekten/1.5 Ov. infectieuze en parasitaire zktn (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/Totaal nieuwvormingen (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/Totaal kwaadaardige nieuwvormingen (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.1 Kw. nv. van lip, mond en keel (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.2 Kw. nv. van slokdarm (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.3 Kw. nv. van maag (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.4 Kw. nv. van dikke darm (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.5 Kw. nv. van endeldarm en anus (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.6 Kw. nv. lever en intrah. galwegen (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.7 Kw. nv. van galblaas en galwegen (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.8 Kw. nv. van alvleesklier (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.9 Kw. nv. van strottenhoofd (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.10 Kw. nv. van luchtpijp en long (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.11 Melanoom van huid (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.12 Kw. nv. van borst (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.13 Kw. nv. van baarmoederhals (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.14 Kw. nv. van baarmoederlichaam (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.15 Kw. nv. van eierstok (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.16 Kw. nv. van prostaat (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.17 Kw. nv. nier, behalve nierbekken (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.18 Kw. nv. van urineblaas (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.19 Kw. nv. lymf. en bloedv. weefsel (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.1 Kwaadaardige nieuwvormingen/2.1.20 Ov. kwaadaardige nieuwvormingen (aantal)&quot;;</span>
+<span class="s2">         &quot;2 Nieuwvormingen/2.2 Overige nieuwvormingen (aantal)&quot;;</span>
+<span class="s2">         &quot;3 Zktn bloed, bloedvormende organen en.. (aantal)&quot;;</span>
+<span class="s2">         &quot;4 Endocriene, voedings-, stofwiss. zktn/Totaal endocriene, voedings-, stofwiss.. (aantal)&quot;;</span>
+<span class="s2">         &quot;4 Endocriene, voedings-, stofwiss. zktn/4.1 Suikerziekte (aantal)&quot;;</span>
+<span class="s2">         &quot;4 Endocriene, voedings-, stofwiss. zktn/4.2 Ov. endocriene, voedings-, stofwis.. (aantal)&quot;;</span>
+<span class="s2">         &quot;5 Psychische en gedragsstoornissen/Totaal psychische stoornissen (aantal)&quot;;</span>
+<span class="s2">         &quot;5 Psychische en gedragsstoornissen/5.1 Psychische stoornissen door alcohol (aantal)&quot;;</span>
+<span class="s2">         &quot;5 Psychische en gedragsstoornissen/5.2 Psychische stoornissen drugs en vl.. (aantal)&quot;;</span>
+<span class="s2">         &quot;5 Psychische en gedragsstoornissen/5.3 Overige psychische stoornissen (aantal)&quot;;</span>
+<span class="s2">         &quot;6 Ziekten van zenuwstelsel en zintuigen/Totaal ziekten zenuwstelsel en zintuigen (aantal)&quot;;</span>
+<span class="s2">         &quot;6 Ziekten van zenuwstelsel en zintuigen/6.1 Hersenvliesontsteking (aantal)&quot;;</span>
+<span class="s2">         &quot;6 Ziekten van zenuwstelsel en zintuigen/6.2 Ziekte van Parkinson (aantal)&quot;;</span>
+<span class="s2">         &quot;6 Ziekten van zenuwstelsel en zintuigen/6.3 Ov. zktn zenuwstelsel en zintuigen (aantal)&quot;;</span>
+<span class="s2">         &quot;7 Ziekten van hart en vaatstelsel/Totaal ziekten van hart en vaatstelsel (aantal)&quot;;</span>
+<span class="s2">         &quot;7 Ziekten van hart en vaatstelsel/7.1 Ziekten van de kransvaten/Totaal ziekten van de kransvaten (aantal)&quot;;</span>
+<span class="s2">         &quot;7 Ziekten van hart en vaatstelsel/7.1 Ziekten van de kransvaten/7.1.1 Acuut hartinfarct (aantal)&quot;;</span>
+<span class="s2">         &quot;7 Ziekten van hart en vaatstelsel/7.1 Ziekten van de kransvaten/7.1.2 Overige ziekten van de kransvaten (aantal)&quot;;</span>
+<span class="s2">         &quot;7 Ziekten van hart en vaatstelsel/7.2 Overige hartziekten (aantal)&quot;;</span>
+<span class="s2">         &quot;7 Ziekten van hart en vaatstelsel/7.3 Hersenvaatletsels (aantal)&quot;;</span>
+<span class="s2">         &quot;7 Ziekten van hart en vaatstelsel/7.4 Overige ziekten hart en vaatstelsel (aantal)&quot;;</span>
+<span class="s2">         &quot;8 Ziekten van de ademhalingsorganen/Totaal ziekten van de ademhalingsorganen (aantal)&quot;;</span>
+<span class="s2">         &quot;8 Ziekten van de ademhalingsorganen/8.1 Griep (aantal)&quot;;</span>
+<span class="s2">         &quot;8 Ziekten van de ademhalingsorganen/8.2 Longontsteking (aantal)&quot;;</span>
+<span class="s2">         &quot;8 Ziekten van de ademhalingsorganen/8.3 Chron. aand. onderste luchtwegen/Totaal chronische aand. onderste lucht.. (aantal)&quot;;</span>
+<span class="s2">         &quot;8 Ziekten van de ademhalingsorganen/8.3 Chron. aand. onderste luchtwegen/8.3.1 Astma (aantal)&quot;;</span>
+<span class="s2">         &quot;8 Ziekten van de ademhalingsorganen/8.3 Chron. aand. onderste luchtwegen/8.3.2 Ov. chron. aand. onderste luchtw.. (aantal)&quot;;</span>
+<span class="s2">         &quot;8 Ziekten van de ademhalingsorganen/8.4 Overige ziekten ademhalingsorganen (aantal)&quot;;</span>
+<span class="s2">         &quot;9 Ziekten van de spijsverteringsorganen/Totaal ziekten spijsverteringsorganen (aantal)&quot;;</span>
+<span class="s2">         &quot;9 Ziekten van de spijsverteringsorganen/9.1 Maagzweer en zweer aan twaalfvinge.. (aantal)&quot;;</span>
+<span class="s2">         &quot;9 Ziekten van de spijsverteringsorganen/9.2 Chronische leveraandoeningen/Totaal chronische leveraandoeningen (aantal)&quot;;</span>
+<span class="s2">         &quot;9 Ziekten van de spijsverteringsorganen/9.2 Chronische leveraandoeningen/9.2.1 Chronische leveraand. alcohol (aantal)&quot;;</span>
+<span class="s2">         &quot;9 Ziekten van de spijsverteringsorganen/9.2 Chronische leveraandoeningen/9.2.2 Ov. chronische leveraandoeningen (aantal)&quot;;</span>
+<span class="s2">         &quot;9 Ziekten van de spijsverteringsorganen/9.3 Ov. ziekten spijsverteringsorganen (aantal)&quot;;</span>
+<span class="s2">         &quot;10 Ziekten van huid en subcutis (aantal)&quot;;</span>
+<span class="s2">         &quot;11 Ziekten botspierstelsel en bindweef../Totaal ziekten spieren, beend., bindwfsl (aantal)&quot;;</span>
+<span class="s2">         &quot;11 Ziekten botspierstelsel en bindweef../11.1 Reumatoïde artritis en artrose (aantal)&quot;;</span>
+<span class="s2">         &quot;11 Ziekten botspierstelsel en bindweef../11.2 Ov. zktn spieren, beend., bindwfsl (aantal)&quot;;</span>
+<span class="s2">         &quot;12 Ziekten van urogenitaal stelsel/Totaal zktn urinewegen en gesl. organen (aantal)&quot;;</span>
+<span class="s2">         &quot;12 Ziekten van urogenitaal stelsel/12.1 Ziekten van nier en urineleider (aantal)&quot;;</span>
+<span class="s2">         &quot;12 Ziekten van urogenitaal stelsel/12.2 Ov. zktn urinewegen en gesl.organen (aantal)&quot;;</span>
+<span class="s2">         &quot;13 Zwangerschap, bevalling en kraambed. (aantal)&quot;;</span>
+<span class="s2">         &quot;14 Aandoeningen v.d. perinatale periode (aantal)&quot;;</span>
+<span class="s2">         &quot;15 Aangeboren afwijkingen/Totaal aangeboren afwijkingen (aantal)&quot;;</span>
+<span class="s2">         &quot;15 Aangeboren afwijkingen/15.1 Aangeboren afw. zenuwstelsel (aantal)&quot;;</span>
+<span class="s2">         &quot;15 Aangeboren afwijkingen/15.2 Aangeboren afw. hart en bloedvaten (aantal)&quot;;</span>
+<span class="s2">         &quot;15 Aangeboren afwijkingen/15.3 Overige aangeboren afwijkingen (aantal)&quot;;</span>
+<span class="s2">         &quot;16 Sympt., afwijkende klinische bevind../Totaal symp. en onvoll. omschr. ziekte.. (aantal)&quot;;</span>
+<span class="s2">         &quot;16 Sympt., afwijkende klinische bevind../16.1 Wiegendood (aantal)&quot;;</span>
+<span class="s2">         &quot;16 Sympt., afwijkende klinische bevind../16.2 Onvoll. omschr. en onbek. oorzaken (aantal)&quot;;</span>
+<span class="s2">         &quot;16 Sympt., afwijkende klinische bevind../16.3 Ov. symptomen en onvolledig omsch.. (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/Totaal uitwendige doodsoorzaken (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.1 Ongevallen/Totaal ongevallen (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.1 Ongevallen/17.1.1 Vervoersongevallen/Totaal vervoersongevallen (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.1 Ongevallen/17.1.1 Vervoersongevallen/17.1.1.1 Wegverkeersongevallen (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.1 Ongevallen/17.1.1 Vervoersongevallen/17.1.1.2 Overige vervoersongevallen (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.1 Ongevallen/17.1.2 Accidentele val (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.1 Ongevallen/17.1.3 Accidentele verdrinking (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.1 Ongevallen/17.1.4 Accidentele vergiftiging (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.1 Ongevallen/17.1.5 Overige ongevallen (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.2 Zelfdoding (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.3 Moord en doodslag (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.4 Gebeurtenissen opzet onbekend (aantal)&quot;;</span>
+<span class="s2">         &quot;17 Uitwendige doodsoorzaken/17.5 Overige uitwendige doodsoorzaken (aantal)&quot;;</span>
+<span class="s2">         &quot;18 COVID-19 (Coronavirus ziekte 19)/18 Totaal COVID-19 (Coronavirus 19) (aantal)&quot;;</span>
+<span class="s2">         &quot;18 COVID-19 (Coronavirus ziekte 19)/18.1 Vastgestelde COVID-19 (aantal)&quot;;</span>
+<span class="s2">         &quot;18 COVID-19 (Coronavirus ziekte 19)/18.2 Vermoedelijke COVID-19 (aantal)&quot;&quot;&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)</span>
+
+
+<span class="n">aantal</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">          168678;</span>
+<span class="s2">          2974;</span>
+<span class="s2">          32;</span>
+<span class="s2">          1;</span>
+<span class="s2">          34;</span>
+<span class="s2">          23;</span>
+<span class="s2">          2884;</span>
+<span class="s2">          47089;</span>
+<span class="s2">          45103;</span>
+<span class="s2">          690;</span>
+<span class="s2">          2013;</span>
+<span class="s2">          1150;</span>
+<span class="s2">          3395;</span>
+<span class="s2">          1235;</span>
+<span class="s2">          956;</span>
+<span class="s2">          452;</span>
+<span class="s2">          2942;</span>
+<span class="s2">          205;</span>
+<span class="s2">          10080;</span>
+<span class="s2">          811;</span>
+<span class="s2">          3083;</span>
+<span class="s2">          230;</span>
+<span class="s2">          560;</span>
+<span class="s2">          1032;</span>
+<span class="s2">          3006;</span>
+<span class="s2">          923;</span>
+<span class="s2">          1359;</span>
+<span class="s2">          3636;</span>
+<span class="s2">          7345;</span>
+<span class="s2">          1986;</span>
+<span class="s2">          560;</span>
+<span class="s2">          3646;</span>
+<span class="s2">          2799;</span>
+<span class="s2">          847;</span>
+<span class="s2">          11682;</span>
+<span class="s2">          531;</span>
+<span class="s2">          61;</span>
+<span class="s2">          11090;</span>
+<span class="s2">          8387;</span>
+<span class="s2">          50;</span>
+<span class="s2">          1792;</span>
+<span class="s2">          6545;</span>
+<span class="s2">          36622;</span>
+<span class="s2">          8037;</span>
+<span class="s2">          4718;</span>
+<span class="s2">          3319;</span>
+<span class="s2">          12682;</span>
+<span class="s2">          8850;</span>
+<span class="s2">          7053;</span>
+<span class="s2">          10503;</span>
+<span class="s2">          295;</span>
+<span class="s2">          2726;</span>
+<span class="s2">          5776;</span>
+<span class="s2">          146;</span>
+<span class="s2">          5630;</span>
+<span class="s2">          1706;</span>
+<span class="s2">          4882;</span>
+<span class="s2">          138;</span>
+<span class="s2">          948;</span>
+<span class="s2">          433;</span>
+<span class="s2">          515;</span>
+<span class="s2">          3796;</span>
+<span class="s2">          323;</span>
+<span class="s2">          1067;</span>
+<span class="s2">          333;</span>
+<span class="s2">          734;</span>
+<span class="s2">          3248;</span>
+<span class="s2">          1958;</span>
+<span class="s2">          1290;</span>
+<span class="s2">          2;</span>
+<span class="s2">          390;</span>
+<span class="s2">          436;</span>
+<span class="s2">          42;</span>
+<span class="s2">          87;</span>
+<span class="s2">          307;</span>
+<span class="s2">          7664;</span>
+<span class="s2">          11;</span>
+<span class="s2">          4436;</span>
+<span class="s2">          3217;</span>
+<span class="s2">          9030;</span>
+<span class="s2">          6433;</span>
+<span class="s2">          633;</span>
+<span class="s2">          590;</span>
+<span class="s2">          43;</span>
+<span class="s2">          5234;</span>
+<span class="s2">          107;</span>
+<span class="s2">          238;</span>
+<span class="s2">          221;</span>
+<span class="s2">          1823;</span>
+<span class="s2">          107;</span>
+<span class="s2">          28;</span>
+<span class="s2">          639;</span>
+<span class="s2">          20173;</span>
+<span class="s2">          17495;</span>
+<span class="s2">          2678</span>
+<span class="s2">         &quot;&quot;&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)</span>
+
+
+<span class="n">aliases</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Nieuwvormingen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cancer&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Hart en vaatstelsel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;hart disease&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Psychische en gedragsstoornissen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mental illness&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Ademhalingsorganen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;breathing&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Uitwendige doodsoorzaken&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;externals&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Zenuwstelsel en zintuigen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;nerves&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Afwijkende klinische bevindingen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;other diseases NOS&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Spijsverteringsorganen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;stomach disease&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Endocriene, voedings-, stofwisseling&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;metabolism disease&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Urogenitaal stelsel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;kidney disease&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Infectieuze en parasitaire ziekten&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;infectious disease&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Botspierstelsel en bindweefsel&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;muscle disease&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Bloed, bloedvormende organen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;blood disease&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Aangeboren afwijkingen&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;birth defect&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Huid en subcutis&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;skin disease&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Zwangerschap&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;pregnancy&quot;</span>
+<span class="n">aliases</span><span class="p">[</span><span class="s2">&quot;Suicide&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;suicide&quot;</span>
+
+
+<span class="n">demo</span> <span class="o">=</span> <span class="n">Object</span><span class="p">()</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">gehandicapten</span> <span class="o">=</span> <span class="mi">2000000</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">ggz</span> <span class="o">=</span> <span class="mi">800000</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">population</span> <span class="o">=</span> <span class="mi">17440000</span>
+<span class="n">demo</span><span class="o">.</span><span class="n">part</span> <span class="o">=</span> <span class="mi">7000000000</span> <span class="o">/</span> <span class="n">demo</span><span class="o">.</span><span class="n">population</span>
+
+
+<span class="n">jaar</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">jaar</span><span class="p">[</span><span class="s2">&quot;WvGGZ&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">14206</span>
+<span class="n">jaar</span><span class="p">[</span><span class="s2">&quot;Pvp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20088</span>
+<span class="n">jaar</span><span class="p">[</span><span class="s2">&quot;Wzd&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">25000</span>
+<span class="n">jaar</span><span class="p">[</span><span class="s2">&quot;Wfz&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">23820</span>
+<span class="n">jaar</span><span class="p">[</span><span class="s2">&quot;totaal&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">168678</span>
+
+
+<span class="n">oorzaak</span> <span class="o">=</span> <span class="n">Object</span><span class="p">()</span>
+<span class="n">construct</span><span class="p">(</span><span class="n">oorzaak</span><span class="p">,</span> <span class="nb">zip</span><span class="p">(</span><span class="n">oor</span><span class="p">,</span> <span class="n">aantal</span><span class="p">))</span>
+<span class="n">oorzaken</span> <span class="o">=</span> <span class="n">Object</span><span class="p">()</span>
+
+
+
+<span class="k">def</span> <span class="nf">getalias</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">aliases</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">txt</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span> <span class="nf">getday</span><span class="p">():</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="n">day</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">day</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">getnr</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">(</span><span class="n">oorzaken</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">oorzaken</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+
+<span class="k">def</span> <span class="nf">seconds</span><span class="p">(</span><span class="n">nrs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">nrs</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">nrs</span>
+    <span class="k">return</span> <span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">24</span><span class="o">*</span><span class="mi">365</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">nrs</span><span class="p">)</span>
+
+
+
+<span class="k">def</span> <span class="nf">iswanted</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">k</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span> <span class="nf">daily</span><span class="p">():</span>
+    <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">24</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
+        <span class="n">evt</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+        <span class="n">cbnow</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">hourly</span><span class="p">():</span>
+    <span class="k">while</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
+        <span class="n">evt</span> <span class="o">=</span> <span class="n">Event</span><span class="p">()</span>
+        <span class="n">cbnow</span><span class="p">(</span><span class="n">evt</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">cbnow</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">STARTTIME</span>
+    <span class="n">txt</span> <span class="o">=</span> <span class="n">laps</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">keys</span><span class="p">(</span><span class="n">oorzaken</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">seconds</span><span class="p">(</span><span class="n">getnr</span><span class="p">(</span><span class="n">x</span><span class="p">))):</span>
+        <span class="n">needed</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">(</span><span class="n">getnr</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">needed</span> <span class="o">&gt;</span> <span class="mi">60</span><span class="o">*</span><span class="mi">60</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">nrtimes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">delta</span><span class="o">/</span><span class="n">needed</span><span class="p">)</span>
+        <span class="n">txt</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">getalias</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">nrtimes</span><span class="p">)</span>
+    <span class="n">txt</span> <span class="o">+=</span> <span class="s2">&quot; http://genocide.rtfd.io&quot;</span>
+    <span class="k">for</span> <span class="n">bot</span> <span class="ow">in</span> <span class="n">Fleet</span><span class="o">.</span><span class="n">objs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;announce&quot;</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">bot</span><span class="p">):</span>
+            <span class="n">bot</span><span class="o">.</span><span class="n">announce</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">cbstats</span><span class="p">(</span><span class="n">evt</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">evt</span><span class="o">.</span><span class="n">rest</span> <span class="ow">or</span> <span class="s2">&quot;Psych&quot;</span>
+    <span class="n">needed</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">(</span><span class="n">getnr</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">needed</span><span class="p">:</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">STARTTIME</span>
+        <span class="n">nrtimes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">delta</span><span class="o">/</span><span class="n">needed</span><span class="p">)</span>
+        <span class="n">nryear</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">YEAR</span><span class="o">/</span><span class="n">needed</span><span class="p">)</span>
+        <span class="n">nrday</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">DAY</span><span class="o">/</span><span class="n">needed</span><span class="p">)</span>
+        <span class="n">delta2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">getday</span><span class="p">()</span>
+        <span class="n">thisday</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">delta2</span><span class="o">/</span><span class="n">needed</span><span class="p">)</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="s2">&quot;patient #</span><span class="si">%s</span><span class="s2"> died from </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">) every </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">/year)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                                                               <span class="n">nrtimes</span><span class="p">,</span>
+                                                               <span class="n">getalias</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+                                                               <span class="n">thisday</span><span class="p">,</span>
+                                                               <span class="n">nrday</span><span class="p">,</span>
+                                                               <span class="n">laps</span><span class="p">(</span><span class="n">needed</span><span class="p">),</span>
+                                                               <span class="n">nryear</span><span class="p">,</span>
+                                                              <span class="p">)</span>
+        <span class="k">for</span> <span class="n">bot</span> <span class="ow">in</span> <span class="n">Fleet</span><span class="o">.</span><span class="n">objs</span><span class="p">:</span>
+            <span class="n">bot</span><span class="o">.</span><span class="n">announce</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="now"><a class="viewcode-back" href="../../../sbn.modules.mdl.html#sbn.modules.mdl.now">[docs]</a><span class="k">def</span> <span class="nf">now</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">rest</span> <span class="ow">or</span> <span class="s2">&quot;Psych&quot;</span>
+    <span class="n">needed</span> <span class="o">=</span> <span class="n">seconds</span><span class="p">(</span><span class="n">getnr</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">needed</span><span class="p">:</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">STARTTIME</span>
+        <span class="n">txt</span> <span class="o">=</span> <span class="n">laps</span><span class="p">(</span><span class="n">delta</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span>
+        <span class="n">nrtimes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">delta</span><span class="o">/</span><span class="n">needed</span><span class="p">)</span>
+        <span class="n">nryear</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">YEAR</span><span class="o">/</span><span class="n">needed</span><span class="p">)</span>
+        <span class="n">nrday</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">DAY</span><span class="o">/</span><span class="n">needed</span><span class="p">)</span>
+        <span class="n">thisday</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">DAY</span> <span class="o">%</span> <span class="n">needed</span><span class="p">)</span>
+        <span class="n">txt</span> <span class="o">+=</span> <span class="s2">&quot;patient #</span><span class="si">%s</span><span class="s2"> died from </span><span class="si">%s</span><span class="s2"> (</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">/</span><span class="si">%s</span><span class="s2">) every </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                                                                 <span class="n">nrtimes</span><span class="p">,</span>
+                                                                 <span class="n">getalias</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
+                                                                 <span class="n">thisday</span><span class="p">,</span>
+                                                                 <span class="n">nrday</span><span class="p">,</span>
+                                                                 <span class="n">nryear</span><span class="p">,</span>
+                                                                 <span class="n">laps</span><span class="p">(</span><span class="n">needed</span><span class="p">)</span>
+                                                                <span class="p">)</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">event</span><span class="o">.</span><span class="n">reply</span><span class="p">(</span><span class="s2">&quot;not needed&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">boot</span><span class="p">():</span>
+    <span class="n">_nr</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">(</span><span class="n">oorzaak</span><span class="p">):</span>
+        <span class="n">_nr</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">_nr</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Totaal&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;(aantal)&quot;&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Ziekten van de&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Ziekten van&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Ziekten&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Zktn&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;zktn&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;en..&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;bindweef&quot;</span><span class="p">,</span> <span class="s2">&quot;bindweefsel&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;bevind&quot;</span><span class="p">,</span> <span class="s2">&quot;bevindingen&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;stofwiss.&quot;</span><span class="p">,</span> <span class="s2">&quot;stofwisseling&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Sympt.,&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;, bevalling en kraambed. &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">atl</span> <span class="o">=</span> <span class="n">atl</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Aandoeningen v.d. &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="n">nms</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">atl</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">:])</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span>
+        <span class="n">nms</span> <span class="o">=</span> <span class="n">nms</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">oorzaken</span><span class="p">,</span> <span class="n">nms</span><span class="p">,</span> <span class="n">aantal</span><span class="p">[</span><span class="n">_nr</span><span class="p">])</span>
+
+
+<span class="n">boot</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sbn.excepts &#8212; Skull, Bones and Numner (OTP-CR-117/19)</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sbn.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="Search within Skull, Bones and Numner (OTP-CR-117/19)"
+          href="../../_static/opensearch.xml"/>
+    <link rel="icon" href="../../_static/skull.jpg"/>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for sbn.excepts</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is placed in the Public Domain.</span>
+<span class="c1">#</span>
+<span class="c1"># pylint: disable=C,R,W0125,E0402</span>
+
+
+<span class="s2">&quot;deferred exception handling&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+
+<span class="kn">from</span> <span class="nn">.objects</span> <span class="kn">import</span> <span class="n">Object</span>
+
+
+<span class="k">def</span> <span class="fm">__dir__</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="s1">&#39;Error&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;debug&#39;</span>
+    <span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="fm">__dir__</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Error"><a class="viewcode-back" href="../../sbn.excepts.html#sbn.excepts.Error">[docs]</a><span class="k">class</span> <span class="nc">Error</span><span class="p">(</span><span class="n">Object</span><span class="p">):</span>
+
+    <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="nb">filter</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="nb">print</span>
+    <span class="n">shown</span>  <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="Error.add"><a class="viewcode-back" href="../../sbn.excepts.html#sbn.excepts.Error.add">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+        <span class="n">excp</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">with_traceback</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">__traceback__</span><span class="p">)</span>
+        <span class="n">Error</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">excp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Error.format"><a class="viewcode-back" href="../../sbn.excepts.html#sbn.excepts.Error.format">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">(</span>
+                             <span class="n">traceback</span><span class="o">.</span><span class="n">print_exception</span><span class="p">(</span>
+                                                       <span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">),</span>
+                                                       <span class="n">exc</span><span class="p">,</span>
+                                                       <span class="n">exc</span><span class="o">.</span><span class="n">__traceback__</span>
+                                                      <span class="p">)</span>
+                            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">stream</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="n">line</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="Error.handle"><a class="viewcode-back" href="../../sbn.excepts.html#sbn.excepts.Error.handle">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">handle</span><span class="p">(</span><span class="n">exc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">Error</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+            <span class="n">txt</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Error</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">exc</span><span class="p">))</span>
+            <span class="n">Error</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Error.show"><a class="viewcode-back" href="../../sbn.excepts.html#sbn.excepts.Error.show">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">show</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">exc</span> <span class="ow">in</span> <span class="n">Error</span><span class="o">.</span><span class="n">errors</span><span class="p">:</span>
+            <span class="n">Error</span><span class="o">.</span><span class="n">handle</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Error.skip"><a class="viewcode-back" href="../../sbn.excepts.html#sbn.excepts.Error.skip">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">skip</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">skp</span> <span class="ow">in</span> <span class="n">Error</span><span class="o">.</span><span class="n">filter</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">skp</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div></div>
+
+
+<div class="viewcode-block" id="debug"><a class="viewcode-back" href="../../sbn.excepts.html#sbn.excepts.debug">[docs]</a><span class="k">def</span> <span class="nf">debug</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">Error</span><span class="o">.</span><span class="n">output</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">Error</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="n">txt</span><span class="p">):</span>
+        <span class="n">Error</span><span class="o">.</span><span class="n">output</span><span class="p">(</span><span class="n">txt</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
